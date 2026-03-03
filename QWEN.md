@@ -208,3 +208,10 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Active Technologies
+- TypeScript 5.x (Docusaurus v3.9.x requires TypeScript), Node.js 20.x LTS + @docusaurus/core v3.9.x, @docusaurus/preset-classic v3.9.x, prism-react-renderer (001-physical-ai-book)
+- Static MDX files in docs/ folder (no database — content is static markdown/MDX) (001-physical-ai-book)
+
+## Recent Changes
+- 001-physical-ai-book: Added TypeScript 5.x (Docusaurus v3.9.x requires TypeScript), Node.js 20.x LTS + @docusaurus/core v3.9.x, @docusaurus/preset-classic v3.9.x, prism-react-renderer

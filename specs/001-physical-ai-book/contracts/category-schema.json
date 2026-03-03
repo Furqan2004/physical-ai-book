@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Docusaurus Category Configuration",
+  "description": "Schema for _category_.json files in Physical AI Book project",
+  "type": "object",
+  "required": ["label", "position"],
+  "properties": {
+    "label": {
+      "type": "string",
+      "description": "Display name shown in sidebar navigation",
+      "minLength": 1,
+      "examples": [
+        "Part 1: Foundations of Physical AI",
+        "Part 2: ROS 2 — Robotic Nervous System",
+        "Appendix: Hardware & Setup"
+      ]
+    },
+    "position": {
+      "type": "integer",
+      "description": "Order in sidebar (lower number = higher position)",
+      "minimum": 1,
+      "maximum": 7,
+      "examples": [1, 2, 3, 4, 5, 6, 7]
+    },
+    "collapsible": {
+      "type": "boolean",
+      "description": "Whether the category can be collapsed in sidebar",
+      "default": true,
+      "examples": [true, false]
+    },
+    "className": {
+      "type": "string",
+      "description": "Optional custom CSS class for styling",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$",
+      "examples": ["custom-part", "highlighted-section"]
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "label": "Part 1: Foundations of Physical AI",
+      "position": 1,
+      "collapsible": true
+    },
+    {
+      "label": "Part 2: ROS 2 — Robotic Nervous System",
+      "position": 2,
+      "collapsible": true,
+      "className": "ros2-section"
+    },
+    {
+      "label": "Appendix: Hardware & Setup",
+      "position": 7,
+      "collapsible": true
+    }
+  ]
+}
