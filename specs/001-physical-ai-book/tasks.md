@@ -285,21 +285,21 @@
 
 ### Research Phase
 
-- [ ] T126 [P] [US1] [US4] Call source-verified-researcher for Appendix: "Physical AI lab hardware workstation GPU RTX requirements Isaac Sim Gazebo 2024 sources"
-- [ ] T127 [P] [US1] [US4] Call source-verified-researcher for Appendix: "AWS RoboMaker NVIDIA Omniverse cloud robotics lab setup cost 2024 sources"
-- [ ] T128 [P] [US1] [US4] Call source-verified-researcher for Appendix: "NVIDIA Jetson Orin Nano student kit assembly ROS 2 RealSense camera setup sources"
+- [X] T126 [P] [US1] [US4] Call source-verified-researcher for Appendix: "Physical AI lab hardware workstation GPU RTX requirements Isaac Sim Gazebo 2024 sources"
+- [X] T127 [P] [US1] [US4] Call source-verified-researcher for Appendix: "AWS RoboMaker NVIDIA Omniverse cloud robotics lab setup cost 2024 sources"
+- [X] T128 [P] [US1] [US4] Call source-verified-researcher for Appendix: "NVIDIA Jetson Orin Nano student kit assembly ROS 2 RealSense camera setup sources"
 
 ### Implementation for Appendix
 
-- [ ] T129 [P] [US1] Create `docs/appendix/hardware-requirements.md` with frontmatter (sidebar_position: 1)
-- [ ] T130 [US1] Format content: Workstation Requirements | GPU Recommendations | RAM and Storage | OS Requirements | Jetson Edge Kit | References
-- [ ] T131 [P] [US1] Create `docs/appendix/cloud-lab-setup.md` with frontmatter (sidebar_position: 2)
-- [ ] T132 [US1] Format content: Cloud vs On-Premise | AWS Setup | Azure/GCP Options | Cost Estimation | Limitations | References
-- [ ] T133 [P] [US1] Create `docs/appendix/jetson-student-kit.md` with frontmatter (sidebar_position: 3)
-- [ ] T134 [US1] Format content: Kit Components | Assembly Steps | ROS 2 on Jetson | Connecting RealSense | Testing Setup | References
-- [ ] T135 [US1] [US4] Verify all references have 3+ working source links per appendix page
-- [ ] T136 [US1] Run `npm run build` — verify zero errors, no broken links
-- [ ] T137 [US1] Run `npm run start` — test navigation to all 3 appendix pages
+- [X] T129 [P] [US1] Create `docs/appendix/hardware-requirements.md` with frontmatter (sidebar_position: 1)
+- [X] T130 [US1] Format content: Workstation Requirements | GPU Recommendations | RAM and Storage | OS Requirements | Jetson Edge Kit | References
+- [X] T131 [P] [US1] Create `docs/appendix/cloud-lab-setup.md` with frontmatter (sidebar_position: 2)
+- [X] T132 [US1] Format content: Cloud vs On-Premise | AWS Setup | Azure/GCP Options | Cost Estimation | Limitations | References
+- [X] T133 [P] [US1] Create `docs/appendix/jetson-student-kit.md` with frontmatter (sidebar_position: 3)
+- [X] T134 [US1] Format content: Kit Components | Assembly Steps | ROS 2 on Jetson | Connecting RealSense | Testing Setup | References
+- [X] T135 [US1] [US4] Verify all references have 3+ working source links per appendix page
+- [X] T136 [US1] Run `npm run build` — verify zero errors, no broken links
+- [X] T137 [US1] Run `npm run start` — test navigation to all 3 appendix pages
 
 **Checkpoint**: Appendix complete — 3 reference pages with practical information
 
