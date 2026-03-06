@@ -212,6 +212,10 @@ See `.specify/memory/constitution.md` for code quality, testing, performance, se
 ## Active Technologies
 - TypeScript 5.x (Docusaurus v3.9.x requires TypeScript), Node.js 20.x LTS + @docusaurus/core v3.9.x, @docusaurus/preset-classic v3.9.x, prism-react-renderer (001-physical-ai-book)
 - Static MDX files in docs/ folder (no database — content is static markdown/MDX) (001-physical-ai-book)
+- Python 3.11 (backend), TypeScript 5.x (frontend), Node.js 20.x LTS + FastAPI 0.115.0, OpenAI Agents SDK 0.0.15, OpenAI SDK 1.50.0, Qdrant Client 1.11.0, AsyncPG 0.29.0, Better Auth (client), Docusaurus v3.9.x (001-rag-chatbot-auth)
+- Qdrant Cloud Free Tier (vectors), Neon Serverless Postgres (relational data) (001-rag-chatbot-auth)
+- Python 3.11 (backend), TypeScript 5.x (frontend), Node.js 20.x LTS + FastAPI 0.115.0, Docusaurus v3.9.x, Better-Auth, asyncpg 0.29.0, qdrant-client 1.11.0, OpenAI SDK 1.50.0 (002-rag-chatbot-fixes)
+- Neon Serverless Postgres (relational data), Qdrant Cloud Free Tier (vectors) (002-rag-chatbot-fixes)
 
 ## Recent Changes
 - 001-physical-ai-book: Added TypeScript 5.x (Docusaurus v3.9.x requires TypeScript), Node.js 20.x LTS + @docusaurus/core v3.9.x, @docusaurus/preset-classic v3.9.x, prism-react-renderer

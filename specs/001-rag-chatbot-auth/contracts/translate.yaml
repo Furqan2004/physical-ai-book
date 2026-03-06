@@ -1,0 +1,85 @@
+openapi: 3.0.3
+info:
+  title: Translation API
+  description: Urdu translation endpoint for chapter content
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development
+  - url: https://your-app.railway.app
+    description: Production (Railway)
+
+paths:
+  /api/translate:
+    post:
+      summary: Translate chapter content to Urdu
+      description: |
+        Translate chapter content to Urdu while preserving:
+        - Code blocks (unchanged)
+        - Technical terms in English (API, function, variable, etc.)
+        - Markdown formatting (headings, lists, etc.)
+        
+        Returns translated content as a Server-Sent Events stream.
+      operationId: translate
+      tags:
+        - Translation
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranslateRequest'
+      responses:
+        '200':
+          description: Streaming response with Urdu translated content
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Server-Sent Events stream with Urdu translation
+                example: "data: # تعارف\n\ndata: طبیعی AI (مصنوعی ذہانت) سے مراد وہ...\n\n"
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/signup or /auth/signin
+
+  schemas:
+    TranslateRequest:
+      type: object
+      required:
+        - chapter_content
+        - chapter_id
+      properties:
+        chapter_content:
+          type: string
+          description: Full markdown content of the chapter to translate
+          example: "# Introduction\n\nPhysical AI is a field that..."
+        chapter_id:
+          type: string
+          description: Unique identifier for the chapter
+          example: "chapter-1-introduction"
+
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+          example: "Invalid request body"

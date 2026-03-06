@@ -1,0 +1,151 @@
+openapi: 3.0.3
+info:
+  title: Chat API
+  description: RAG chatbot endpoints for book content questions and chat history
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development
+  - url: https://your-app.railway.app
+    description: Production (Railway)
+
+paths:
+  /api/chat:
+    post:
+      summary: Send a message to the chatbot
+      description: |
+        Send a question to the RAG chatbot. The bot will search the book content
+        for relevant information and stream a response. Supports optional selected_text
+        for context-aware questions.
+        
+        Response is streamed using Server-Sent Events (SSE).
+      operationId: chat
+      tags:
+        - Chat
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Streaming response with chatbot answer
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Server-Sent Events stream with message chunks
+                example: "data: The book explains that...\n\ndata: physical AI involves...\n\n"
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/chat/history:
+    get:
+      summary: Get chat history for a session
+      description: Retrieve all messages from a specific chat session.
+      operationId: getChatHistory
+      tags:
+        - Chat
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: query
+          required: true
+          description: Chat session identifier
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Chat history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatHistoryResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/signup or /auth/signin
+
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+        - session_id
+      properties:
+        message:
+          type: string
+          description: User's question or message
+          example: "What is physical AI?"
+        session_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the chat session
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        selected_text:
+          type: string
+          nullable: true
+          description: Optional text selected by user on the page
+          example: "Physical AI refers to AI systems that interact with the physical world"
+
+    ChatHistoryResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+
+    ChatMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+          example: "user"
+        content:
+          type: string
+          example: "What is physical AI?"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-03-05T10:30:00Z"
+
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+          example: "Session not found"

@@ -1,0 +1,283 @@
+openapi: 3.0.3
+info:
+  title: Auth API
+  description: Authentication endpoints for user registration, login, and session management
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development
+  - url: https://your-app.railway.app
+    description: Production (Railway)
+
+paths:
+  /auth/signup:
+    post:
+      summary: Register a new user
+      description: Create a new user account with name, email, and password. On success, returns JWT token and redirects to onboarding.
+      operationId: signup
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  example: "Ali Khan"
+                email:
+                  type: string
+                  format: email
+                  example: "ali@example.com"
+                password:
+                  type: string
+                  minLength: 8
+                  example: "SecurePass123!"
+      responses:
+        '200':
+          description: Successfully created account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid input or email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+
+  /auth/signin:
+    post:
+      summary: Sign in existing user
+      description: Authenticate user with email and password. Returns JWT token on success.
+      operationId: signin
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "ali@example.com"
+                password:
+                  type: string
+                  example: "SecurePass123!"
+      responses:
+        '200':
+          description: Successfully signed in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid email or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/signout:
+    post:
+      summary: Sign out user
+      description: Invalidate current session token. Requires authentication.
+      operationId: signout
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully signed out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/me:
+    get:
+      summary: Get current user profile
+      description: Retrieve authenticated user's profile information including background data.
+      operationId: getCurrentUser
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /user/background:
+    post:
+      summary: Save user background information
+      description: Complete user onboarding by saving learning preferences and background.
+      operationId: saveUserBackground
+      tags:
+        - User
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BackgroundRequest'
+      responses:
+        '200':
+          description: Background saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '400':
+          description: Invalid background data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/signup or /auth/signin
+
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT token for authentication
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        user:
+          $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          example: "Ali Khan"
+        email:
+          type: string
+          format: email
+          example: "ali@example.com"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-03-05T10:00:00Z"
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+        background:
+          $ref: '#/components/schemas/UserBackground'
+
+    UserBackground:
+      type: object
+      properties:
+        software_experience:
+          type: string
+          enum: [beginner, intermediate, advanced]
+          example: "intermediate"
+        hardware_background:
+          type: string
+          nullable: true
+          example: "Worked with Arduino and Raspberry Pi"
+        known_languages:
+          type: array
+          items:
+            type: string
+          example: ["Python", "JavaScript", "TypeScript"]
+        learning_style:
+          type: string
+          enum: [visual, reading, hands-on]
+          example: "hands-on"
+
+    BackgroundRequest:
+      type: object
+      required:
+        - software_experience
+        - known_languages
+        - learning_style
+      properties:
+        software_experience:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        hardware_background:
+          type: string
+          nullable: true
+        known_languages:
+          type: array
+          items:
+            type: string
+        learning_style:
+          type: string
+          enum: [visual, reading, hands-on]
+
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+          example: "Invalid email or password"

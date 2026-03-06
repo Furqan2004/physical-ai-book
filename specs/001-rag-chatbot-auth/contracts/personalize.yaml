@@ -1,0 +1,87 @@
+openapi: 3.0.3
+info:
+  title: Personalization API
+  description: Content personalization endpoint based on user background
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development
+  - url: https://your-app.railway.app
+    description: Production (Railway)
+
+paths:
+  /api/personalize:
+    post:
+      summary: Personalize chapter content
+      description: |
+        Rewrite chapter content based on user's background (experience level,
+        known languages, learning style). Returns personalized content as a
+        Server-Sent Events stream.
+        
+        The personalized content:
+        - Adjusts complexity based on software_experience
+        - Uses code examples in known_languages where applicable
+        - Adapts explanations to learning_style
+      operationId: personalize
+      tags:
+        - Personalization
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonalizeRequest'
+      responses:
+        '200':
+          description: Streaming response with personalized content
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Server-Sent Events stream with personalized chapter content
+                example: "data: # Introduction to Physical AI\n\ndata: Physical AI (Artificial Intelligence) refers to...\n\n"
+        '400':
+          description: Invalid request or user has no background data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/signup or /auth/signin
+
+  schemas:
+    PersonalizeRequest:
+      type: object
+      required:
+        - chapter_content
+        - chapter_id
+      properties:
+        chapter_content:
+          type: string
+          description: Full markdown content of the chapter to personalize
+          example: "# Introduction\n\nPhysical AI is a field that..."
+        chapter_id:
+          type: string
+          description: Unique identifier for the chapter
+          example: "chapter-1-introduction"
+
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+          example: "Please complete onboarding first"
