@@ -29,17 +29,25 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          # Tells GitHub where the lock file is for caching
+          cache-dependency-path: './frontend/package-lock.json'
 
       - name: Install dependencies
+        # Runs the command inside the frontend folder
+        working-directory: ./frontend
         run: npm ci
 
       - name: Build website
+        # Runs the build script inside the frontend folder
+        working-directory: ./frontend
         run: npm run build
 
       - name: Upload Build Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./build
+          # Points to the build output folder inside frontend
+          # Note: Use ./frontend/dist if you are using Vite
+          path: ./frontend/dist
 
   # Deploy job
   deploy:
