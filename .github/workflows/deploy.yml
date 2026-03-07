@@ -40,6 +40,8 @@ jobs:
       - name: Build website
         # Runs the build command inside the frontend directory
         working-directory: ./frontend
+        env:
+          API_URL: ${{ secrets.API_URL || 'http://localhost:8000' }}
         run: npm run build
 
       - name: Upload Build Artifact
