@@ -1,116 +1,96 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
-from typing import List
+from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue, PayloadSchemaType
+from typing import List, Dict, Any
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
 COLLECTION_NAME = "book_content"
-
-# Dynamic vector dimension detection (FR-016)
-def get_vector_dimension() -> int:
-    """Get embedding dimension dynamically from actual embedding function"""
-    from services.openrouter_service import get_embedding
-    test_embedding = get_embedding("test")
-    return len(test_embedding)
-
+VECTOR_SIZE = 1024  # Matches nvidia/llama-nemotron-embed-vl-1b-v2
 
 def get_qdrant_client() -> QdrantClient:
-    """Get Qdrant client instance"""
+    """Initialize Qdrant client with cloud credentials."""
     return QdrantClient(
         url=os.getenv("QDRANT_URL"),
         api_key=os.getenv("QDRANT_API_KEY"),
     )
 
-
 def create_collection_if_not_exists() -> None:
-    """Create Qdrant collection if it doesn't exist with dynamic dimension"""
+    """Create collection with proper vector dimension and payload indexes."""
     client = get_qdrant_client()
-    
-    # Get actual embedding dimension
-    vector_size = get_vector_dimension()
 
     if not client.collection_exists(COLLECTION_NAME):
         client.create_collection(
             collection_name=COLLECTION_NAME,
             vectors_config=VectorParams(
-                size=vector_size,
+                size=VECTOR_SIZE,
                 distance=Distance.COSINE
-            )
+            ),
         )
-        print(f"Collection '{COLLECTION_NAME}' created with dimension={vector_size}!")
-    else:
-        # Verify dimension matches
-        info = client.get_collection(COLLECTION_NAME)
-        stored_dim = info.config.params.vectors.size
-        if stored_dim != vector_size:
-            print(f"⚠️  WARNING: Collection dimension mismatch!")
-            print(f"   Stored: {stored_dim}, Current embedding: {vector_size}")
-            print(f"   → Collection needs recreation")
-        else:
-            print(f"Collection '{COLLECTION_NAME}' already exists (dim={vector_size}).")
-
-
-def upsert_vectors(ids: List[str], vectors: List[List[float]], payloads: List[dict]) -> bool:
-    """
-    Upsert vectors into Qdrant collection.
+        print(f"✅ Collection '{COLLECTION_NAME}' created.")
     
-    Args:
-        ids: List of vector IDs
-        vectors: List of embedding vectors
-        payloads: List of metadata payloads
-        
-    Returns:
-        True if successful, False otherwise
-    """
-    client = get_qdrant_client()
-    
-    points = []
-    for id, vector, payload in zip(ids, vectors, payloads):
-        point = PointStruct(
-            id=id,
-            vector=vector,
-            payload=payload
+    # Ensure payload indexes exist (can be called safely even if they already exist)
+    try:
+        client.create_payload_index(
+            collection_name=COLLECTION_NAME,
+            field_name="source_file",
+            field_schema=PayloadSchemaType.KEYWORD,
         )
-        points.append(point)
-    
-    response = client.upsert(
-        collection_name=COLLECTION_NAME,
-        points=points
-    )
-    
-    return response.status == "completed"
+        client.create_payload_index(
+            collection_name=COLLECTION_NAME,
+            field_name="file_hash",
+            field_schema=PayloadSchemaType.KEYWORD,
+        )
+        print(f"✅ Payload indexes verified for '{COLLECTION_NAME}'.")
+    except Exception as e:
+        print(f"⚠️ Warning verifying payload indexes: {e}")
 
-
-def search_similar(query_vector: List[float], top_k: int = 5) -> List[dict]:
-    """
-    Search for similar vectors in the collection.
-    
-    Args:
-        query_vector: The query embedding vector
-        top_k: Number of results to return
-        
-    Returns:
-        List of dicts with content, chapter_name, heading, and score
-    """
+def upsert_points(points: List[PointStruct]) -> None:
+    """Insert or update points in the collection."""
     client = get_qdrant_client()
-    
-    results = client.search(
+    client.upsert(
         collection_name=COLLECTION_NAME,
-        query_vector=query_vector,
-        limit=top_k
+        points=points,
     )
-    
+    print(f"✅ Upserted {len(points)} points into '{COLLECTION_NAME}'.")
+
+def delete_points_by_file(source_file: str) -> None:
+    """Delete all points associated with a specific source file."""
+    client = get_qdrant_client()
+    client.delete(
+        collection_name=COLLECTION_NAME,
+        points_selector=Filter(
+            must=[
+                FieldCondition(
+                    key="source_file",
+                    match=MatchValue(value=source_file)
+                )
+            ]
+        )
+    )
+
+def search_similar(query_vector: List[float], top_k: int = 5) -> List[Dict[str, Any]]:
+    """Search for similar chunks using query_points (recommended method)."""
+    client = get_qdrant_client()
+
+    # Query using the current recommended method
+    results = client.query_points(
+        collection_name=COLLECTION_NAME,
+        query=query_vector,
+        limit=top_k,
+        with_payload=True,
+    ).points
+
     formatted_results = []
-    for result in results:
+    for point in results:
         formatted_results.append({
-            "content": result.payload.get("content", ""),
-            "chapter_name": result.payload.get("chapter_name", ""),
-            "heading": result.payload.get("heading", ""),
-            "source_file": result.payload.get("source_file", ""),
-            "chunk_index": result.payload.get("chunk_index", 0),
-            "score": result.score
+            "content":      point.payload.get("content", ""),
+            "chapter_name": point.payload.get("chapter_name", ""),
+            "heading":      point.payload.get("heading", ""),
+            "source_file":  point.payload.get("source_file", ""),
+            "chunk_index":  point.payload.get("chunk_index", 0),
+            "score":        point.score,
         })
-    
+
     return formatted_results

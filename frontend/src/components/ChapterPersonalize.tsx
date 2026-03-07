@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '@theme/Root';
+import { useAuth } from '../theme/Root';
 import { apiFetchComplete } from '@site/src/utils/api';
 
 /**
@@ -21,7 +21,7 @@ export function ChapterPersonalize({
   chapterTitle,
   chapterId,
   onPersonalized
-}: ChapterPersonalizeProps): JSX.Element | null {
+}: ChapterPersonalizeProps): React.JSX.Element | null {
   const { isLoggedIn } = useAuth();
   const [personalizedContent, setPersonalizedContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

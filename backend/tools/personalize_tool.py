@@ -1,10 +1,10 @@
 from ai import function_tool
 from services.db_service import get_user_background
-from openai import OpenAI
+from openai import AsyncOpenAI
 import os
 import asyncio
 
-llm_client = OpenAI(
+llm_client = AsyncOpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=os.getenv("OPENROUTER_API_KEY"),
     default_headers={
@@ -15,7 +15,7 @@ llm_client = OpenAI(
 
 
 @function_tool
-def personalize_content(chapter_content: str, user_id: str) -> str:
+async def personalize_content(chapter_content: str, user_id: str) -> str:
     """
     Personalize chapter content based on user background and experience.
     
@@ -27,7 +27,7 @@ def personalize_content(chapter_content: str, user_id: str) -> str:
         Personalized content string
     """
     # Get user background
-    background = asyncio.run(get_user_background(user_id))
+    background = await get_user_background(user_id)
     
     if not background:
         return "Error: User background not found. Please complete onboarding first."
@@ -55,7 +55,7 @@ Chapter Content:
 Rewrite the content following the user's profile. Keep markdown formatting.
 """
 
-    response = llm_client.chat.completions.create(
+    response = await llm_client.chat.completions.create(
         model="nvidia/nemotron-3-nano-30b-a3b:free",
         messages=[{"role": "user", "content": prompt}]
     )

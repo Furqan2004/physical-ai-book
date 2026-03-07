@@ -1,6 +1,6 @@
 import React from 'react';
 import OriginalContent from '@theme-original/Navbar/Content';
-import { useAuth } from '@theme/Root';
+import { useAuth } from '../../Root';
 import { useHistory } from '@docusaurus/router';
 import Link from '@docusaurus/Link';
 import type { WrapperProps } from '@docusaurus/types';
@@ -8,7 +8,7 @@ import type ContentType from '@theme/Navbar/Content';
 
 type Props = WrapperProps<typeof ContentType>;
 
-export default function ContentWrapper(props: Props): JSX.Element {
+export default function ContentWrapper(props: Props): React.JSX.Element {
   const { isLoggedIn, user, logout } = useAuth();
   const history = useHistory();
 

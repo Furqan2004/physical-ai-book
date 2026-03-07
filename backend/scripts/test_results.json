@@ -1,117 +1,42 @@
 {
-  "passed": 15,
+  "passed": 0,
   "failed": 7,
   "warnings": 0,
   "details": [
     {
       "name": "Database connection",
       "passed": false,
-      "message": "connection was closed in the middle of operation"
+      "message": "No module named 'services'"
     },
     {
-      "name": "Qdrant Cloud connection",
+      "name": "Qdrant setup",
       "passed": false,
-      "message": "Connection failed: timed out"
+      "message": "No module named 'services'"
     },
     {
       "name": "Embedding generation",
       "passed": false,
-      "message": "Error code: 402 - {'error': {'message': 'Insufficient credits. This account never purchased credits. Make sure your key is on the correct account or org, and if so, purchase more at https://openrouter.ai/settings/credits', 'code': 402}}"
+      "message": "No module named 'services'"
     },
     {
-      "name": "GET /health",
-      "passed": true,
-      "message": ""
-    },
-    {
-      "name": "Health response has status",
-      "passed": true,
-      "message": ""
-    },
-    {
-      "name": "GET /",
-      "passed": true,
-      "message": ""
-    },
-    {
-      "name": "POST /auth/signup",
-      "passed": true,
-      "message": ""
-    },
-    {
-      "name": "Signup returns token",
-      "passed": true,
-      "message": ""
-    },
-    {
-      "name": "Signup returns user data",
-      "passed": true,
-      "message": ""
-    },
-    {
-      "name": "GET /auth/me (with token)",
+      "name": "Authentication endpoints",
       "passed": false,
-      "message": ""
+      "message": "No module named 'main'"
     },
     {
-      "name": "POST /user/background",
+      "name": "Chat endpoints",
       "passed": false,
-      "message": ""
-    },
-    {
-      "name": "Guest chat - Status 200",
-      "passed": true,
-      "message": ""
-    },
-    {
-      "name": "Guest chat - Streaming response",
-      "passed": true,
-      "message": ""
-    },
-    {
-      "name": "User chat - Status 200",
-      "passed": true,
-      "message": ""
-    },
-    {
-      "name": "User chat - Streaming response",
-      "passed": true,
-      "message": ""
-    },
-    {
-      "name": "GET /api/chat/history",
-      "passed": false,
-      "message": ""
+      "message": "No module named 'main'"
     },
     {
       "name": "Agent initialization",
       "passed": false,
-      "message": "No module named 'ai.triage_agent'"
+      "message": "No module named 'ai'"
     },
     {
-      "name": "CORS preflight - Status 200",
-      "passed": true,
-      "message": ""
-    },
-    {
-      "name": "CORS header 'Access-Control-Allow-Origin'",
-      "passed": true,
-      "message": ""
-    },
-    {
-      "name": "CORS header 'Access-Control-Allow-Methods'",
-      "passed": true,
-      "message": ""
-    },
-    {
-      "name": "CORS header 'Access-Control-Allow-Headers'",
-      "passed": true,
-      "message": ""
-    },
-    {
-      "name": "CORS header 'Access-Control-Allow-Credentials'",
-      "passed": true,
-      "message": ""
+      "name": "CORS configuration",
+      "passed": false,
+      "message": "No module named 'main'"
     }
   ]
 }

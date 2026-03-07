@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { apiStream, apiFetch } from '../../utils/api';
+import { apiFetch } from '../../utils/api';
 import { GuestBanner } from '../GuestBanner';
 import { ChatHistory } from '../ChatHistory';
 import { useAuth } from '../../theme/Root';
@@ -15,44 +15,48 @@ interface ChatWindowProps {
   isLoggedIn?: boolean;
 }
 
-export default function ChatWindow({ onClose, initialSelectedText, isLoggedIn = false }: ChatWindowProps): JSX.Element {
-  const { isLoggedIn: authIsLoggedIn } = useAuth();
+export default function ChatWindow({ onClose, initialSelectedText, isLoggedIn = false }: ChatWindowProps): React.JSX.Element {
+  const { isLoggedIn: authIsLoggedIn, user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Use prop if provided, otherwise use auth hook
   const isUserLoggedIn = isLoggedIn !== undefined ? isLoggedIn : authIsLoggedIn();
 
-  // Generate session ID once (use user ID for logged-in users to persist history)
-  const sessionIdRef = useRef<string>(
-    isUserLoggedIn
-      ? `user-session-${Date.now()}`
-      : `guest-session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-  );
+  // Current session ID - start fresh every time by default
+  const [sessionId, setSessionId] = useState<string>(() => {
+    return `session-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+  });
 
-  // Load chat history for logged-in users on mount
+  // Load chat history when session changes
   useEffect(() => {
     if (isUserLoggedIn) {
       loadChatHistory();
+    } else {
+      setMessages([]);
     }
-  }, [isUserLoggedIn]);
+  }, [isUserLoggedIn, sessionId]);
 
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const loadChatHistory = async () => {
     try {
-      const response = await apiFetch(`/api/chat/history?session_id=${sessionIdRef.current}`, {}, true);
+      const response = await apiFetch(`/api/chat/history?session_id=${sessionId}`, {}, true);
       if (response.ok) {
         const data = await response.json();
         if (data.messages && data.messages.length > 0) {
-          setMessages(data.messages);
-          setShowHistory(true);
+          const formattedMessages = data.messages.map((m: any) => ({
+            role: m.role,
+            content: m.content
+          }));
+          setMessages(formattedMessages);
+        } else {
+          setMessages([]);
         }
       }
     } catch (error) {
@@ -60,60 +64,51 @@ export default function ChatWindow({ onClose, initialSelectedText, isLoggedIn = 
     }
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  // Auto-send if opened from "Ask AI" (only for new empty chats)
+  useEffect(() => {
+    if (initialSelectedText && messages.length === 0 && !isLoading) {
+      handleSend(`Explain this content: "${initialSelectedText}"`);
+    }
+  }, [initialSelectedText, sessionId]);
 
-    const userMessage = input.trim();
-    setInput('');
+  const handleSend = async (overrideInput?: string) => {
+    const userMessage = overrideInput || input.trim();
+    if (!userMessage || isLoading) return;
+
+    if (!overrideInput) setInput('');
     setIsLoading(true);
 
-    // Add user message
-    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
-
-    // Add empty assistant placeholder
-    setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
+    // If it was a manual send, add to UI immediately
+    if (!overrideInput) {
+      setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
+    }
 
     try {
-      await apiStream(
-        '/api/chat',
-        {
+      const response = await apiFetch('/api/chat', {
+        method: 'POST',
+        body: JSON.stringify({
           message: userMessage,
-          session_id: sessionIdRef.current,
+          session_id: sessionId,
           selected_text: initialSelectedText || null,
-        },
-        // On chunk received
-        (chunk: string) => {
-          // Parse SSE data
-          const lines = chunk.split('\n');
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              setMessages((prev) => {
-                const updated = [...prev];
-                const lastMsg = updated[updated.length - 1];
-                if (lastMsg && lastMsg.role === 'assistant') {
-                  lastMsg.content += data;
-                }
-                return updated;
-              });
-            }
-          }
-        },
-        // On done
-        () => {
-          setIsLoading(false);
-        }
-      );
+        }),
+      }, isUserLoggedIn);
+
+      if (!response.ok) throw new Error('Server error');
+
+      const data = await response.json();
+      
+      // If auto-sent, we might need the user message in history too
+      if (overrideInput) {
+        setMessages([
+          { role: 'user', content: userMessage },
+          { role: 'assistant', content: data.response }
+        ]);
+      } else {
+        setMessages((prev) => [...prev, { role: 'assistant', content: data.response }]);
+      }
     } catch (error) {
-      console.error('Chat error:', error);
-      setMessages((prev) => {
-        const updated = [...prev];
-        const lastMsg = updated[updated.length - 1];
-        if (lastMsg && lastMsg.role === 'assistant') {
-          lastMsg.content = 'Error: Failed to get response. Please try again.';
-        }
-        return updated;
-      });
+      setMessages((prev) => [...prev, { role: 'assistant', content: 'Error connecting to AI. Please try again.' }]);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -125,104 +120,91 @@ export default function ChatWindow({ onClose, initialSelectedText, isLoggedIn = 
     }
   };
 
+  const handleSelectSession = (id: string) => {
+    setSessionId(id);
+    setShowHistory(false);
+  };
+
   return (
     <div
       style={{
         position: 'fixed',
-        bottom: '0',
+        bottom: '20px',
         right: '20px',
-        width: '400px',
-        height: '600px',
-        backgroundColor: 'white',
-        boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.15)',
-        borderRadius: '12px 12px 0 0',
+        width: '380px',
+        height: '550px',
+        backgroundColor: 'var(--ifm-background-color)',
+        boxShadow: '0 8px 30px rgba(0, 0, 0, 0.2)',
+        borderRadius: '16px',
         display: 'flex',
         flexDirection: 'column',
-        zIndex: 1000,
+        zIndex: 10000,
+        overflow: 'hidden',
+        border: '1px solid var(--ifm-color-emphasis-200)',
       }}
     >
       {/* Header */}
       <div
         style={{
           padding: '16px',
-          borderBottom: '1px solid #e0e0e0',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           backgroundColor: 'var(--ifm-color-primary)',
           color: 'white',
-          borderRadius: '12px 12px 0 0',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <h3 style={{ margin: 0, fontSize: '16px' }}>Book Assistant</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {isUserLoggedIn && (
             <button
               onClick={() => setShowHistory(!showHistory)}
-              title={showHistory ? 'Hide history' : 'Show history'}
+              title="Chat History"
               style={{
-                background: 'rgba(255, 255, 255, 0.2)',
+                background: 'rgba(255,255,255,0.2)',
                 border: 'none',
                 color: 'white',
-                fontSize: '14px',
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
                 cursor: 'pointer',
-                padding: '4px 8px',
-                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '18px',
               }}
             >
               📜
             </button>
           )}
+          <h3 style={{ margin: 0, fontSize: '16px', color: 'white' }}>
+            {showHistory ? 'History' : 'AI Assistant'}
+          </h3>
         </div>
         <button
           onClick={onClose}
           style={{
-            background: 'transparent',
+            background: 'rgba(255,255,255,0.2)',
             border: 'none',
             color: 'white',
-            fontSize: '20px',
+            width: '28px',
+            height: '28px',
+            borderRadius: '50%',
             cursor: 'pointer',
-            padding: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '18px',
           }}
         >
           ×
         </button>
       </div>
 
-      {/* Guest banner - only show for non-logged-in users */}
       {!isUserLoggedIn && <GuestBanner />}
 
-      {/* Logged-in features banner */}
-      {isUserLoggedIn && (
-        <div style={{
-          padding: '8px 16px',
-          backgroundColor: '#e8f5e9',
-          fontSize: '12px',
-          borderBottom: '1px solid #c8e6c9',
-          color: '#2e7d32',
-        }}>
-          ✨ Premium Features Active: Personalization • Translation • Chat History • Selected Text AI
-        </div>
-      )}
-
-      {/* Chat History - only for logged-in users */}
+      {/* History View Overlay */}
       {isUserLoggedIn && showHistory && (
-        <ChatHistory sessionId={sessionIdRef.current} />
-      )}
-
-      {/* Selected text banner */}
-      {initialSelectedText && (
-        <div
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#f0f0f0',
-            fontSize: '12px',
-            borderBottom: '1px solid #e0e0e0',
-          }}
-        >
-          <strong>Asking about:</strong> "{initialSelectedText.substring(0, 100)}
-          {initialSelectedText.length > 100 ? '...' : ''}"
-        </div>
+        <ChatHistory onSelectSession={handleSelectSession} currentSessionId={sessionId} />
       )}
 
       {/* Messages */}
@@ -230,108 +212,110 @@ export default function ChatWindow({ onClose, initialSelectedText, isLoggedIn = 
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '16px',
+          padding: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '15px',
+          backgroundColor: 'var(--ifm-background-color)',
         }}
       >
-        {messages.length === 0 && (
-          <p style={{ color: '#666', textAlign: 'center', marginTop: '40px' }}>
-            Ask me anything about the book content!
-          </p>
+        {messages.length === 0 && !isLoading && (
+          <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--ifm-color-emphasis-600)' }}>
+            <p>Started a new conversation.</p>
+            <p style={{ fontSize: '12px' }}>How can I help you today?</p>
+          </div>
         )}
 
         {messages.map((msg, index) => (
           <div
             key={index}
             style={{
-              marginBottom: '12px',
-              display: 'flex',
-              justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+              alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+              maxWidth: '85%',
+              padding: '12px 16px',
+              borderRadius: msg.role === 'user' ? '18px 18px 2px 18px' : '18px 18px 18px 2px',
+              backgroundColor: msg.role === 'user' ? 'var(--ifm-color-primary)' : 'var(--ifm-color-emphasis-100)',
+              color: msg.role === 'user' ? 'white' : 'var(--ifm-color-emphasis-900)',
+              fontSize: '14px',
+              lineHeight: '1.5',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
             }}
           >
-            <div
-              style={{
-                maxWidth: '80%',
-                padding: '10px 14px',
-                borderRadius: '12px',
-                backgroundColor: msg.role === 'user' ? 'var(--ifm-color-primary)' : '#f0f0f0',
-                color: msg.role === 'user' ? 'white' : '#333',
-                wordWrap: 'break-word',
-              }}
-            >
-              {msg.content}
-            </div>
+            {msg.content}
           </div>
         ))}
 
         {isLoading && (
-          <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'flex-start' }}>
-            <div
-              style={{
-                padding: '10px 14px',
-                borderRadius: '12px',
-                backgroundColor: '#f0f0f0',
-                display: 'flex',
-                gap: '4px',
-              }}
-            >
-              <span style={{ animation: 'bounce 1.4s infinite' }}>●</span>
-              <span style={{ animation: 'bounce 1.4s infinite 0.2s' }}>●</span>
-              <span style={{ animation: 'bounce 1.4s infinite 0.4s' }}>●</span>
+          <div style={{ alignSelf: 'flex-start', backgroundColor: 'var(--ifm-color-emphasis-100)', padding: '12px 16px', borderRadius: '18px 18px 18px 2px' }}>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <div className="dot" style={{ width: '6px', height: '6px', backgroundColor: '#888', borderRadius: '50%', animation: 'bounce 1.4s infinite' }}></div>
+              <div className="dot" style={{ width: '6px', height: '6px', backgroundColor: '#888', borderRadius: '50%', animation: 'bounce 1.4s infinite 0.2s' }}></div>
+              <div className="dot" style={{ width: '6px', height: '6px', backgroundColor: '#888', borderRadius: '50%', animation: 'bounce 1.4s infinite 0.4s' }}></div>
             </div>
           </div>
         )}
-
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
-      <div
-        style={{
-          padding: '16px',
-          borderTop: '1px solid #e0e0e0',
-          display: 'flex',
-          gap: '8px',
-        }}
-      >
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Ask a question about the book..."
-          disabled={isLoading}
+      {!showHistory && (
+        <div
           style={{
-            flex: 1,
-            padding: '10px',
-            border: '1px solid #ccc',
-            borderRadius: '6px',
-            fontSize: '14px',
-          }}
-        />
-        <button
-          onClick={handleSend}
-          disabled={isLoading || !input.trim()}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: 'var(--ifm-color-primary)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: isLoading || !input.trim() ? 'not-allowed' : 'pointer',
-            opacity: isLoading || !input.trim() ? 0.6 : 1,
+            padding: '15px',
+            borderTop: '1px solid var(--ifm-color-emphasis-200)',
+            display: 'flex',
+            gap: '10px',
+            backgroundColor: 'var(--ifm-background-color)',
           }}
         >
-          Send
-        </button>
-      </div>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Type a message..."
+            disabled={isLoading}
+            style={{
+              flex: 1,
+              padding: '12px 15px',
+              border: '1px solid var(--ifm-color-emphasis-300)',
+              borderRadius: '25px',
+              fontSize: '14px',
+              outline: 'none',
+              backgroundColor: 'var(--ifm-background-color)',
+              color: 'var(--ifm-color-emphasis-900)',
+            }}
+          />
+          <button
+            onClick={() => handleSend()}
+            disabled={isLoading || !input.trim()}
+            style={{
+              width: '40px',
+              height: '40px',
+              backgroundColor: 'var(--ifm-color-primary)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+              opacity: isLoading || !input.trim() ? 0.6 : 1,
+            }}
+          >
+            ➤
+          </button>
+        </div>
+      )}
 
-      {/* CSS for loading animation */}
       <style>
         {`
           @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
+            0%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-5px); }
           }
+          .dot { display: inline-block; }
         `}
       </style>
     </div>

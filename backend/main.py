@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import auth, chat, personalize, translate
 from routers.auth import user_router
+from services.sync_service import sync_docs_to_qdrant
 import ai  # Import to trigger OpenRouter setup
 import os
 from dotenv import load_dotenv
@@ -13,6 +14,12 @@ app = FastAPI(
     description="API for AI Book RAG Chatbot with Auth and Personalization",
     version="1.0.0"
 )
+
+@app.on_event("startup")
+async def startup_event():
+    """Run synchronization in background on startup"""
+    import asyncio
+    asyncio.create_task(sync_docs_to_qdrant())
 
 # CORS configuration
 origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")

@@ -1,0 +1,124 @@
+openapi: 3.0.3
+info:
+  title: Authentication API (Better Auth Integration)
+  description: API endpoints for managing user authentication and onboarding.
+  version: 1.0.0
+paths:
+  /api/auth/signup:
+    post:
+      summary: Register a new user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+      responses:
+        '200':
+          description: User created and session established
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid input or user already exists
+
+  /api/auth/signin:
+    post:
+      summary: Authenticate a user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+
+  /api/auth/forgot-password:
+    post:
+      summary: Trigger password reset email
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '200':
+          description: Reset email sent
+        '404':
+          description: User not found
+
+  /api/user/onboarding:
+    post:
+      summary: Submit signup questionnaire (Onboarding)
+      tags: [User]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingData'
+      responses:
+        '200':
+          description: Profile updated successfully
+        '401':
+          description: Unauthorized
+
+components:
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        token: { type: string }
+        user:
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+            email: { type: string }
+    OnboardingData:
+      type: object
+      required: [software_experience, hardware_background, known_languages, learning_style]
+      properties:
+        software_experience:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        hardware_background:
+          type: string
+        known_languages:
+          type: array
+          items: { type: string }
+        learning_style:
+          type: string
+          enum: [visual, reading, hands-on]
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

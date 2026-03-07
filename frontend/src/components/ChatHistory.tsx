@@ -1,165 +1,97 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@theme/Root';
-import { apiFetch } from '@site/src/utils/api';
+import { apiFetch } from '../utils/api';
 
-/**
- * Chat Message Interface
- */
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: string;
-}
-
-/**
- * Chat History Props
- */
 interface ChatHistoryProps {
-  sessionId: string;
-  onSelectMessage?: (message: ChatMessage) => void;
+  onSelectSession: (sessionId: string) => void;
+  currentSessionId: string;
 }
 
-/**
- * Chat History Component
- * Displays saved chat history for logged-in users
- */
-export function ChatHistory({ sessionId, onSelectMessage }: ChatHistoryProps): JSX.Element | null {
-  const { isLoggedIn } = useAuth();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Only show for logged-in users
-  if (!isLoggedIn()) {
-    return null;
-  }
+export function ChatHistory({ onSelectSession, currentSessionId }: ChatHistoryProps): React.JSX.Element | null {
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadHistory = async () => {
-      if (!sessionId) return;
+    loadSessions();
+  }, []);
 
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await apiFetch(`/api/chat/history?session_id=${sessionId}`, {}, true);
-
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.detail || 'Failed to load history');
-        }
-
+  const loadSessions = async () => {
+    try {
+      const response = await apiFetch('/api/chat/sessions', {}, true);
+      if (response.ok) {
         const data = await response.json();
-        setMessages(data.messages || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load chat history');
-      } finally {
-        setLoading(false);
+        setSessions(data.sessions || []);
       }
-    };
+    } catch (error) {
+      console.error('Failed to load sessions:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    loadHistory();
-  }, [sessionId]);
-
-  if (loading) {
-    return (
-      <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--ifm-color-emphasis-600)' }}>
-        Loading chat history...
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{
-        padding: '1rem',
-        backgroundColor: '#fee',
-        border: '1px solid #fcc',
-        borderRadius: '4px',
-        color: '#c00',
-      }}>
-        {error}
-      </div>
-    );
-  }
-
-  if (messages.length === 0) {
-    return (
-      <div style={{
-        padding: '1rem',
-        textAlign: 'center',
-        color: 'var(--ifm-color-emphasis-600)',
-        fontStyle: 'italic',
-      }}>
-        No chat history yet. Start a conversation!
-      </div>
-    );
+  if (isLoading) {
+    return <div style={{ padding: '20px', textAlign: 'center' }}>Loading sessions...</div>;
   }
 
   return (
     <div style={{
-      maxHeight: '400px',
+      position: 'absolute',
+      top: '60px',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'var(--ifm-background-color)',
+      zIndex: 100,
       overflowY: 'auto',
-      padding: '1rem',
-      backgroundColor: 'var(--ifm-background-surface-color)',
-      borderRadius: '8px',
-      marginBottom: '1rem',
+      padding: '15px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '10px',
     }}>
-      <h3 style={{
-        margin: '0 0 1rem 0',
-        fontSize: '0.875rem',
-        color: 'var(--ifm-color-emphasis-600)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-      }}>
-        📜 Chat History ({messages.length} messages)
-      </h3>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {messages.map((msg, index) => (
+      <h4 style={{ margin: '0 0 10px 0', paddingBottom: '10px', borderBottom: '1px solid var(--ifm-color-emphasis-200)' }}>
+        Your Previous Chats
+      </h4>
+      
+      {sessions.length === 0 ? (
+        <p style={{ textAlign: 'center', marginTop: '20px', color: '#666' }}>No previous conversations found.</p>
+      ) : (
+        sessions.map((session) => (
           <div
-            key={index}
+            key={session.session_token}
+            onClick={() => onSelectSession(session.session_token)}
             style={{
-              display: 'flex',
-              justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+              padding: '12px',
+              borderRadius: '8px',
+              backgroundColor: currentSessionId === session.session_token ? 'var(--ifm-color-emphasis-200)' : 'var(--ifm-color-emphasis-100)',
+              cursor: 'pointer',
+              border: `1px solid ${currentSessionId === session.session_token ? 'var(--ifm-color-primary)' : 'transparent'}`,
+              transition: 'all 0.2s',
             }}
           >
-            <div
-              style={{
-                maxWidth: '80%',
-                padding: '0.75rem 1rem',
-                borderRadius: '12px',
-                backgroundColor: msg.role === 'user'
-                  ? 'var(--ifm-color-primary)'
-                  : 'var(--ifm-color-emphasis-200)',
-                color: msg.role === 'user' ? 'white' : 'var(--ifm-color-emphasis-800)',
-                fontSize: '0.875rem',
-                lineHeight: '1.5',
-              }}
-            >
-              <div style={{
-                fontSize: '0.75rem',
-                opacity: 0.8,
-                marginBottom: '0.25rem',
-                textTransform: 'capitalize',
-              }}>
-                {msg.role === 'user' ? '👤 You' : '🤖 Assistant'}
-              </div>
-              <div style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
-                {msg.content}
-              </div>
-              <div style={{
-                fontSize: '0.7rem',
-                opacity: 0.6,
-                marginTop: '0.25rem',
-                textAlign: 'right',
-              }}>
-                {new Date(msg.timestamp).toLocaleTimeString()}
-              </div>
+            <div style={{ fontWeight: 'bold', fontSize: '13px', marginBottom: '4px' }}>
+              Chat from {new Date(session.created_at).toLocaleDateString()}
+            </div>
+            <div style={{ fontSize: '11px', color: '#666' }}>
+              ID: {session.session_token.substring(0, 15)}...
             </div>
           </div>
-        ))}
-      </div>
+        ))
+      )}
+      
+      <button
+        onClick={() => onSelectSession(`session-${Date.now()}`)}
+        style={{
+          marginTop: 'auto',
+          padding: '12px',
+          backgroundColor: 'var(--ifm-color-primary)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          fontWeight: 'bold',
+        }}
+      >
+        + Start New Chat
+      </button>
     </div>
   );
 }

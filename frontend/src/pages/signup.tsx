@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { useAuth } from '@theme/Root';
-import { apiFetch } from '@site/src/utils/api';
+import { useAuth } from '../theme/Root';
+import { apiFetch } from '../utils/api';
 import { useHistory } from '@docusaurus/router';
+import { signUp } from '../utils/auth-client';
 
 /**
  * Signup Page Component
  * User registration with background questions
  */
-export default function Signup(): JSX.Element {
+export default function Signup(): React.JSX.Element {
   const { login } = useAuth();
   const history = useHistory();
   const [step, setStep] = useState<1 | 2>(1);
@@ -76,10 +77,12 @@ export default function Signup(): JSX.Element {
     setIsLoading(true);
 
     try {
-      // Step 1: Create account
+      // Step 1: Create account via FastAPI
       const signupResponse = await apiFetch('/auth/signup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           name: basicInfo.name,
           email: basicInfo.email,
@@ -92,14 +95,14 @@ export default function Signup(): JSX.Element {
         throw new Error(data.detail || 'Signup failed');
       }
 
-      const signupData = await signupResponse.json();
-      
+      const authData = await signupResponse.json();
+
       // Step 2: Save background
       const backgroundResponse = await apiFetch('/user/background', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${signupData.token}`,
+          'Authorization': `Bearer ${authData.token}`,
         },
         body: JSON.stringify(background),
       });
@@ -108,8 +111,8 @@ export default function Signup(): JSX.Element {
         console.warn('Background save failed, but account created');
       }
 
-      // Login and redirect
-      login(signupData.token, signupData.user);
+      // Sync context
+      login(authData.token, authData.user);
 
       // Redirect to home
       window.location.href = '/physical-ai-book/';

@@ -16,7 +16,7 @@ interface UserProfile {
   };
 }
 
-export default function Profile(): JSX.Element {
+export default function Profile(): React.JSX.Element {
   const history = useHistory();
   const { logout, isLoggedIn } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);

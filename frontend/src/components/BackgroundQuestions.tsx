@@ -36,7 +36,7 @@ const programmingLanguages = [
  * Background Questions Form Component
  * Reusable component for collecting user background
  */
-export function BackgroundQuestions({ value, onChange }: BackgroundQuestionsProps): JSX.Element {
+export function BackgroundQuestions({ value, onChange }: BackgroundQuestionsProps): React.JSX.Element {
   const handleLanguageToggle = (lang: string) => {
     onChange({
       ...value,

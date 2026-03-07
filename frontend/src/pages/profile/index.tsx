@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@theme/Root';
+import { useAuth } from '../../theme/Root';
 import { apiFetch } from '@site/src/utils/api';
 import { useHistory } from '@docusaurus/router';
 import { BackgroundQuestions, type BackgroundData } from '../../components/BackgroundQuestions';
@@ -19,7 +19,7 @@ interface UserProfile {
  * Profile Page Component
  * Display and edit user profile
  */
-export default function Profile(): JSX.Element {
+export default function Profile(): React.JSX.Element {
   const { user, token, isLoggedIn, logout } = useAuth();
   const history = useHistory();
   const [isLoading, setIsLoading] = useState(true);

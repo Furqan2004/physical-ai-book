@@ -48,8 +48,8 @@ def qdrant_search(query: str, top_k: int = 5) -> str:
         # Check for specific error types
         error_msg = str(e)
         if "Insufficient credits" in error_msg or "402" in error_msg:
-            return "ERROR: Unable to search book content due to API credit limitations. Please contact the administrator to add credits to the OpenRouter API account."
+            return "I'm sorry, I'm unable to search the book right now because my search API credits have run out. Please inform the administrator."
         elif "Connection" in error_msg or "timeout" in error_msg:
-            return "ERROR: Unable to connect to the search service. Please check your internet connection or try again later."
+            return "I'm having trouble connecting to the search service. Please check your internet connection or try again in a moment."
         else:
-            return f"ERROR: Search failed due to technical issue: {error_msg}. Please try again or contact support if the problem persists."
+            return f"I encountered a technical issue while searching: {error_msg}. Please try again later."

@@ -1,8 +1,8 @@
 from ai import function_tool
-from openai import OpenAI
+from openai import AsyncOpenAI
 import os
 
-llm_client = OpenAI(
+llm_client = AsyncOpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=os.getenv("OPENROUTER_API_KEY"),
     default_headers={
@@ -13,7 +13,7 @@ llm_client = OpenAI(
 
 
 @function_tool
-def translate_to_urdu(chapter_content: str) -> str:
+async def translate_to_urdu(chapter_content: str) -> str:
     """
     Translate chapter content to Urdu. Keeps code blocks and
     technical terms in English. Maintains markdown formatting.
@@ -40,7 +40,7 @@ Chapter Content:
 Translate to Urdu following the rules above:
 """
 
-    response = llm_client.chat.completions.create(
+    response = await llm_client.chat.completions.create(
         model="nvidia/nemotron-3-nano-30b-a3b:free",
         messages=[{"role": "user", "content": prompt}]
     )

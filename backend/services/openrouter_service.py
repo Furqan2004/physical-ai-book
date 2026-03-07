@@ -1,33 +1,42 @@
-from openai import OpenAI
 import os
+import asyncio
 from dotenv import load_dotenv
+from google import genai
+from google.genai import types
 
 load_dotenv()
 
-# Initialize OpenRouter client for embeddings
-embeddings_client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY"),
-)
+# Initialize the Gemini Client
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
+# Initialize the Gemini Client
+# Note: Ensure GOOGLE_API_KEY is set in your environment
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
-def get_embedding(text: str) -> list[float]:
-    """
-    Generate embedding vector for text using OpenRouter.
-    
-    Args:
-        text: The text to embed
+async def get_embedding(text: str) -> list[float]:
+    if not text.strip():
+        # Matching your requested dimension for empty inputs
+        return [0.0] * 1024  
+
+    try:
+        response = await client.aio.models.embed_content(
+            model="gemini-embedding-001", 
+            contents=text,
+            config=types.EmbedContentConfig(
+                task_type="RETRIEVAL_DOCUMENT",
+                # This explicitly forces the model to output a 1024-length vector
+                output_dimensionality=1024
+            )
+        )
         
-    Returns:
-        List of floats representing the embedding vector
-    """
-    response = embeddings_client.embeddings.create(
-        extra_headers={
-            "HTTP-Referer": os.getenv("SITE_URL", "http://localhost:3000"),
-            "X-OpenRouter-Title": os.getenv("SITE_NAME", "AI Book"),
-        },
-        model="nvidia/llama-nemotron-embed-vl-1b-v2:free",
-        input=[{"content": [{"type": "text", "text": text}]}],
-        encoding_format="float"
-    )
-    return response.data[0].embedding
+        if response and response.embeddings:
+            return response.embeddings[0].values
+        return None
+            
+    except Exception as e:
+        print(f"❌ Gemini API error: {e}")
+        return None
+
+def get_vector_dimension() -> int:
+    """Explicitly returns 1024 to match your requirement"""
+    return 1024

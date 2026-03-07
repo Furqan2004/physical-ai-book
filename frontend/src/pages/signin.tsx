@@ -4,7 +4,7 @@ import Link from '@docusaurus/Link';
 import { apiFetch } from '../utils/api';
 import { useAuth } from '../theme/Root';
 
-export default function Signin(): JSX.Element {
+export default function Signin(): React.JSX.Element {
   const history = useHistory();
   const { login } = useAuth();
   
@@ -114,7 +114,7 @@ export default function Signin(): JSX.Element {
             <div className="card__footer">
               <p className="text--center">
                 Don't have an account?{' '}
-                <Link to="/signup">Sign Up</Link>
+                <Link to="/physical-ai-book/signup">Sign Up</Link>
               </p>
             </div>
           </div>

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { useAuth } from '@theme/Root';
-import { apiFetch } from '@site/src/utils/api';
+import { useAuth } from '../theme/Root';
+import { apiFetch } from '../utils/api';
 import { useHistory } from '@docusaurus/router';
 
 /**
  * Login Page Component
  * Email/password login form
  */
-export default function Login(): JSX.Element {
+export default function Login(): React.JSX.Element {
   const { login } = useAuth();
   const history = useHistory();
   const [formData, setFormData] = useState({
@@ -25,7 +25,9 @@ export default function Login(): JSX.Element {
     try {
       const response = await apiFetch('/auth/signin', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(formData),
       });
 
@@ -34,10 +36,10 @@ export default function Login(): JSX.Element {
         throw new Error(data.detail || 'Login failed');
       }
 
-      const data = await response.json();
-      
-      // Save token and user
-      login(data.token, data.user);
+      const authData = await response.json();
+
+      // Sync context
+      login(authData.token, authData.user);
 
       // Redirect to home or previous page
       const from = new URLSearchParams(window.location.search).get('from') || '/physical-ai-book/';
@@ -136,12 +138,12 @@ export default function Login(): JSX.Element {
       <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
         <p style={{ marginBottom: '0.5rem' }}>
           Don't have an account?{' '}
-          <a href="/signup" style={{ color: 'var(--ifm-color-primary)' }}>
+          <a href="/physical-ai-book/signup" style={{ color: 'var(--ifm-color-primary)' }}>
             Sign up
           </a>
         </p>
         <p>
-          <a href="/forgot-password" style={{ color: 'var(--ifm-color-primary)', fontSize: '0.9rem' }}>
+          <a href="/physical-ai-book/forgot-password" style={{ color: 'var(--ifm-color-primary)', fontSize: '0.9rem' }}>
             Forgot password?
           </a>
         </p>
