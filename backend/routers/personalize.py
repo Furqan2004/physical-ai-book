@@ -4,22 +4,34 @@ from agents import Runner
 from ai.orchestrator_agent import orchestrator_agent
 from routers.deps import get_authenticated_user
 from services.doc_service import get_doc_content
-from services.db_service import get_user_background
+from services.db_service import get_user_background, get_user_personalization, save_user_personalization
 
 router = APIRouter(prefix="/api", tags=["Personalization"])
 
 class PersonalizeRequest(BaseModel):
     chapter_content: str
     chapter_id: str
+    mode: str = "existing" # "existing" or "fresh"
 
 @router.post("/personalize")
 async def personalize(
     request: PersonalizeRequest,
     current_user: dict = Depends(get_authenticated_user)
 ):
+    # 1. Check DB Cache First (Only if mode is "existing")
+    if request.mode == "existing":
+        cached_content = await get_user_personalization(current_user["id"], request.chapter_id)
+        if cached_content:
+            return {
+                "personalized_content": cached_content,
+                "chapter_id": request.chapter_id,
+                "cached": True
+            }
+
+    # 2. Get Source Content (Either mode is fresh or cache missed)
     content = request.chapter_content
     if content.startswith('@site/docs') or content.endswith('.md'):
-        content = get_doc_content(content)
+        content = await get_doc_content(content)
 
     background = await get_user_background(current_user["id"])
     bg_info = f"""
@@ -50,7 +62,14 @@ RULES:
 """
 
     result = await Runner.run(orchestrator_agent, input=input_text)
+
+    # 3. Save to DB before returning
+    personalized_content = result.final_output
+    await save_user_personalization(current_user["id"], request.chapter_id, personalized_content)
+
     return {
-        "personalized_content": result.final_output,
-        "chapter_id": request.chapter_id
+        "personalized_content": personalized_content,
+        "chapter_id": request.chapter_id,
+        "cached": False
     }
+

@@ -212,6 +212,7 @@ See `.specify/memory/constitution.md` for code quality, testing, performance, se
 ## Active Technologies
 - Python 3.11+ (Backend), TypeScript/Next.js (Frontend - Docusaurus v3.9.2) + Better Auth, FastAPI, OpenAI Agents SDK, Docusaurus, React 19 (004-fix-system-and-auth)
 - Neon PostgreSQL (Relational + Auth), Qdrant Cloud (Vector) (004-fix-system-and-auth)
+- Python 3.11+ + FastAPI, httpx, asyncpg, openai-agents (005-optimize-personalize-translate)
 
 ## Recent Changes
 - 004-fix-system-and-auth: Added Python 3.11+ (Backend), TypeScript/Next.js (Frontend - Docusaurus v3.9.2) + Better Auth, FastAPI, OpenAI Agents SDK, Docusaurus, React 19

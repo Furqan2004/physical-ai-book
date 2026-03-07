@@ -212,3 +212,79 @@ async def save_chunk_metadata(
     except Exception as e:
         print(f"Error saving chunk metadata: {e}")
         return False
+
+
+async def get_user_personalization(user_id: str, chapter_id: str) -> Optional[str]:
+    """Get personalized content for a user and chapter"""
+    pool = await get_connection()
+    try:
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT content FROM user_personalization WHERE user_id = $1 AND chapter_id = $2",
+                user_id, chapter_id
+            )
+            if row:
+                return row['content']
+            return None
+    except Exception as e:
+        print(f"Error getting user personalization: {e}")
+        return None
+
+
+async def save_user_personalization(user_id: str, chapter_id: str, content: str) -> bool:
+    """Save personalized content for a user"""
+    pool = await get_connection()
+    try:
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO user_personalization (user_id, chapter_id, content)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (user_id, chapter_id) DO UPDATE SET
+                    content = EXCLUDED.content,
+                    created_at = NOW()
+                """,
+                user_id, chapter_id, content
+            )
+            return True
+    except Exception as e:
+        print(f"Error saving user personalization: {e}")
+        return False
+
+
+async def get_translation(chapter_id: str, language: str = 'ur') -> Optional[str]:
+    """Get translation for a chapter"""
+    pool = await get_connection()
+    try:
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT content FROM translations WHERE chapter_id = $1 AND language = $2",
+                chapter_id, language
+            )
+            if row:
+                return row['content']
+            return None
+    except Exception as e:
+        print(f"Error getting translation: {e}")
+        return None
+
+
+async def save_translation(chapter_id: str, content: str, language: str = 'ur') -> bool:
+    """Save translation for a chapter (global)"""
+    pool = await get_connection()
+    try:
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO translations (chapter_id, content, language)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (chapter_id, language) DO UPDATE SET
+                    content = EXCLUDED.content,
+                    created_at = NOW()
+                """,
+                chapter_id, content, language
+            )
+            return True
+    except Exception as e:
+        print(f"Error saving translation: {e}")
+        return False

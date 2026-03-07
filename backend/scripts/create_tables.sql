@@ -103,6 +103,26 @@ CREATE TABLE IF NOT EXISTS book_chunks (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Personalization Cache
+CREATE TABLE IF NOT EXISTS user_personalization (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id TEXT REFERENCES "user"(id) ON DELETE CASCADE,
+    chapter_id TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, chapter_id)
+);
+
+-- Global Translation Cache
+CREATE TABLE IF NOT EXISTS translations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    chapter_id TEXT NOT NULL,
+    language VARCHAR(10) DEFAULT 'ur',
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(chapter_id, language)
+);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS "idx_user_email" ON "user"(email);
 CREATE INDEX IF NOT EXISTS "idx_session_token" ON "session"(token);
@@ -114,3 +134,5 @@ CREATE INDEX IF NOT EXISTS idx_chat_messages_created_at ON chat_messages(created
 CREATE INDEX IF NOT EXISTS idx_user_background_user_id ON user_background(user_id);
 CREATE INDEX IF NOT EXISTS idx_book_chunks_qdrant_id ON book_chunks(qdrant_id);
 CREATE INDEX IF NOT EXISTS idx_book_chunks_source_file ON book_chunks(source_file);
+CREATE INDEX IF NOT EXISTS idx_user_personalization_lookup ON user_personalization(user_id, chapter_id);
+CREATE INDEX IF NOT EXISTS idx_translations_lookup ON translations(chapter_id, language);
