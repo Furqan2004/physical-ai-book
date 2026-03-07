@@ -25,7 +25,7 @@ export default function Profile(): React.JSX.Element {
 
   // Redirect if not logged in
   if (!isLoggedIn()) {
-    history.push('/physical-ai-book/signin');
+    history.push('/physical-ai-book/login');
     return <div>Redirecting...</div>;
   }
 

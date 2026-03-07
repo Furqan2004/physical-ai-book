@@ -1,0 +1,11 @@
+venv/
+scripts/
+__pycache__/
+*.pyc
+.env
+.env.local
+node_modules/
+.ipynb_checkpoints/
+*.ipynb
+backend.log
+Process Group PGID: 17765

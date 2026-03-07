@@ -2,8 +2,8 @@
  * API utilities for frontend-backend communication
  */
 
-// Port 8000 for everything (FastAPI handles Auth, Agents, Data)
-const API_URL = 'http://localhost:8000';
+// Use environment variable for backend URL in production, fallback to local for development
+const API_URL = process.env.DOCUSAURUS_BACKEND_URL || 'http://localhost:8000';
 
 /**
  * Get authentication token from localStorage

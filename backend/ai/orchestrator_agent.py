@@ -1,9 +1,5 @@
 from agents import Agent, OpenAIChatCompletionsModel
 RECOMMENDED_PROMPT_PREFIX = ""
-from tools.personalize_tool import personalize_content
-from tools.translate_tool import translate_to_urdu
-from tools.qdrant_search_tool import qdrant_search
-from tools.db_tool import save_message, load_chat_history
 from . import LLM_MODEL, openrouter_client
 
 model = OpenAIChatCompletionsModel(
