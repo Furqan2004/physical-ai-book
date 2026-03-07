@@ -107,6 +107,26 @@ async def create_tables():
                     created_at TIMESTAMP DEFAULT NOW()
                 )
             """),
+            ("user_personalization", """
+                CREATE TABLE IF NOT EXISTS user_personalization (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    user_id TEXT REFERENCES "user"(id) ON DELETE CASCADE,
+                    chapter_id TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT NOW(),
+                    UNIQUE(user_id, chapter_id)
+                )
+            """),
+            ("translations", """
+                CREATE TABLE IF NOT EXISTS translations (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    chapter_id TEXT NOT NULL,
+                    language VARCHAR(10) DEFAULT 'ur',
+                    content TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT NOW(),
+                    UNIQUE(chapter_id, language)
+                )
+            """),
         ]
         
         for table_name, sql in tables:
@@ -123,7 +143,9 @@ async def create_tables():
             'CREATE INDEX IF NOT EXISTS "idx_chat_messages_session_id" ON chat_messages(session_id);',
             'CREATE INDEX IF NOT EXISTS "idx_chat_messages_created_at" ON chat_messages(created_at);',
             'CREATE INDEX IF NOT EXISTS "idx_user_background_user_id" ON user_background(user_id);',
-            'CREATE INDEX IF NOT EXISTS "idx_book_chunks_qdrant_id" ON book_chunks(qdrant_id);'
+            'CREATE INDEX IF NOT EXISTS "idx_book_chunks_qdrant_id" ON book_chunks(qdrant_id);',
+            'CREATE INDEX IF NOT EXISTS idx_user_personalization_lookup ON user_personalization(user_id, chapter_id);',
+            'CREATE INDEX IF NOT EXISTS idx_translations_lookup ON translations(chapter_id, language);'
         ]
         
         for idx_sql in indexes:
