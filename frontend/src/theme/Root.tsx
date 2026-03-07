@@ -5,7 +5,7 @@ import ChatWidget from '../components/ChatWidget';
 /**
  * User interface
  */
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
@@ -40,12 +40,31 @@ export const useAuth = (): AuthContextType => {
 };
 
 /**
+ * Page Content Context for swapping English with AI content
+ */
+interface PageContentContextType {
+  swappedContent: string | null;
+  setSwappedContent: (content: string | null) => void;
+}
+
+export const PageContentContext = createContext<PageContentContextType | null>(null);
+
+export const usePageContent = (): PageContentContextType => {
+  const context = useContext(PageContentContext);
+  if (!context) {
+    throw new Error('usePageContent must be used within PageContentProvider');
+  }
+  return context;
+};
+
+/**
  * Auth Provider Component
  */
 function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [swappedContent, setSwappedContent] = useState<string | null>(null);
 
   // Load auth state from localStorage on mount
   useEffect(() => {
@@ -92,18 +111,11 @@ function AuthProvider({ children }: { children: ReactNode }) {
    * Logout user
    */
   const logout = async () => {
-    try {
-      await apiFetch('/auth/signout', { method: 'POST' }, true);
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_user');
-      setToken(null);
-      setUser(null);
-      // Redirect to root page after logout
-      window.location.href = '/physical-ai-book/';
-    }
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+    setToken(null);
+    setUser(null);
+    window.location.href = '/physical-ai-book/';
   };
 
   /**
@@ -124,7 +136,9 @@ function AuthProvider({ children }: { children: ReactNode }) {
         isLoggedIn,
       }}
     >
-      {children}
+      <PageContentContext.Provider value={{ swappedContent, setSwappedContent }}>
+        {children}
+      </PageContentContext.Provider>
     </AuthContext.Provider>
   );
 }
@@ -133,7 +147,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
  * Root component wrapped with AuthProvider
  * This is the entry point for Docusaurus
  */
-export default function Root({ children }: { children: ReactNode }): JSX.Element {
+export default function Root({ children }: { children: ReactNode }): React.JSX.Element {
   return (
     <AuthProvider>
       {children}

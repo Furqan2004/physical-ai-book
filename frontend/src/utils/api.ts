@@ -2,13 +2,14 @@
  * API utilities for frontend-backend communication
  */
 
-// Docusaurus doesn't support process.env, use hardcoded URL or window variable
-const API_URL = (typeof window !== 'undefined' && (window as any).API_URL) || 'http://localhost:8000';
+// Use environment variable for backend URL in production, fallback to local for development
+const API_URL = process.env.DOCUSAURUS_BACKEND_URL || 'http://localhost:8000';
 
 /**
  * Get authentication token from localStorage
  */
 export const getToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
   return localStorage.getItem('auth_token');
 };
 
@@ -16,6 +17,7 @@ export const getToken = (): string | null => {
  * Get user data from localStorage
  */
 export const getUser = (): { id: string; name: string; email: string } | null => {
+  if (typeof window === 'undefined') return null;
   const user = localStorage.getItem('auth_user');
   if (!user) return null;
   try {
@@ -45,6 +47,8 @@ export async function apiFetch(
     }
   }
 
+  // Prepend /api if not present, but only if it's not an auth or user endpoint
+  // which are already prefixed in the backend routers
   return fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
@@ -52,7 +56,7 @@ export async function apiFetch(
 }
 
 /**
- * Non-streaming fetch for AI responses (returns complete response)
+ * Non-streaming fetch for AI responses
  */
 export async function apiFetchComplete(
   endpoint: string,
@@ -65,61 +69,10 @@ export async function apiFetchComplete(
   }, auth);
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json().catch(() => ({ detail: 'Request failed' }));
     throw new Error(error.detail || 'Request failed');
   }
 
   const data = await response.json();
-  // Extract content from different response formats
   return data.response || data.personalized_content || data.translated_content || '';
-}
-
-/**
- * Stream response handler for SSE (Server-Sent Events) - DEPRECATED
- * Kept for backward compatibility only
- */
-export async function apiStream(
-  endpoint: string,
-  body: object,
-  onChunk: (chunk: string) => void,
-  onDone: () => void
-): Promise<void> {
-  const token = getToken();
-
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(error || 'Stream request failed');
-  }
-
-  const reader = response.body?.getReader();
-  const decoder = new TextDecoder();
-
-  if (!reader) {
-    onDone();
-    return;
-  }
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        onDone();
-        break;
-      }
-      const chunk = decoder.decode(value);
-      onChunk(chunk);
-    }
-  } catch (error) {
-    console.error('Stream error:', error);
-    throw error;
-  }
 }

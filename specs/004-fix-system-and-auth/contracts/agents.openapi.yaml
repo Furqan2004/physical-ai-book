@@ -1,0 +1,136 @@
+openapi: 3.0.3
+info:
+  title: Chatbot and Agent API
+  description: API endpoints for AI interactions (Chat, Personalization, Translation).
+  version: 1.0.0
+paths:
+  /api/chat:
+    post:
+      summary: Send a message to the RAG chatbot
+      tags: [Chat]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+
+  /api/chat/history:
+    get:
+      summary: Get chat history for a session
+      tags: [Chat]
+      parameters:
+        - name: session_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatHistoryResponse'
+
+  /api/personalize:
+    post:
+      summary: Personalize chapter content
+      tags: [Personalization]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonalizeRequest'
+      responses:
+        '200':
+          description: Personalized content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalizeResponse'
+
+  /api/translate:
+    post:
+      summary: Translate chapter content to Urdu
+      tags: [Translation]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranslateRequest'
+      responses:
+        '200':
+          description: Translated content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslateResponse'
+
+components:
+  schemas:
+    ChatRequest:
+      type: object
+      required: [message, session_id]
+      properties:
+        message: { type: string }
+        session_id: { type: string }
+        selected_text: { type: string }
+    ChatResponse:
+      type: object
+      properties:
+        response: { type: string }
+        session_id: { type: string }
+    ChatMessage:
+      type: object
+      properties:
+        role: { type: string, enum: [user, assistant] }
+        content: { type: string }
+        timestamp: { type: string, format: date-time }
+    ChatHistoryResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+    PersonalizeRequest:
+      type: object
+      required: [chapter_content, chapter_id]
+      properties:
+        chapter_content: { type: string }
+        chapter_id: { type: string }
+    PersonalizeResponse:
+      type: object
+      properties:
+        personalized_content: { type: string }
+        chapter_id: { type: string }
+    TranslateRequest:
+      type: object
+      required: [chapter_content, chapter_id]
+      properties:
+        chapter_content: { type: string }
+        chapter_id: { type: string }
+    TranslateResponse:
+      type: object
+      properties:
+        translated_content: { type: string }
+        chapter_id: { type: string }
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

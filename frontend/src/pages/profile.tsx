@@ -16,7 +16,7 @@ interface UserProfile {
   };
 }
 
-export default function Profile(): JSX.Element {
+export default function Profile(): React.JSX.Element {
   const history = useHistory();
   const { logout, isLoggedIn } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -25,7 +25,7 @@ export default function Profile(): JSX.Element {
 
   // Redirect if not logged in
   if (!isLoggedIn()) {
-    history.push('/physical-ai-book/signin');
+    history.push('/physical-ai-book/login');
     return <div>Redirecting...</div>;
   }
 

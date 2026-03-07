@@ -1,12 +1,12 @@
 import React from 'react';
-import { useAuth } from '@theme/Root';
+import { useAuth } from '../theme/Root';
 import Link from '@docusaurus/Link';
 
 /**
  * Auth Buttons Component
  * Shows Login/Signup for guests, Profile link for logged-in users
  */
-export function AuthButtons(): JSX.Element {
+export function AuthButtons(): React.JSX.Element {
   const { isLoggedIn } = useAuth();
 
   if (isLoggedIn()) {

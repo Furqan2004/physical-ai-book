@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '@theme/Root';
+import { useAuth } from '../theme/Root';
 import { apiFetchComplete } from '@site/src/utils/api';
 
 /**
@@ -19,7 +19,7 @@ export function ChapterTranslate({
   chapterContent,
   chapterId,
   onTranslated
-}: ChapterTranslateProps): JSX.Element | null {
+}: ChapterTranslateProps): React.JSX.Element | null {
   const { isLoggedIn } = useAuth();
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

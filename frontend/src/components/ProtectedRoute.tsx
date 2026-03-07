@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
-import { useAuth } from '@theme/Root';
+import { useAuth } from '../theme/Root';
 
 /**
  * Protected Route Component
  * Redirects to login if user is not authenticated
  */
-export function ProtectedRoute({ children }: { children: React.ReactNode }): JSX.Element | null {
+export function ProtectedRoute({ children }: { children: React.ReactNode }): React.JSX.Element | null {
   const { isLoggedIn } = useAuth();
 
   useEffect(() => {

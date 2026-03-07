@@ -3,9 +3,11 @@ import { useAuth } from '../../theme/Root';
 import ChatWindow from './ChatWindow';
 import TextSelectionPopup from './TextSelectionPopup';
 import { GuestBanner } from '../GuestBanner';
+import { useLocation } from '@docusaurus/router';
 
-export default function ChatWidget(): JSX.Element | null {
+export default function ChatWidget(): React.JSX.Element | null {
   const { isLoggedIn } = useAuth();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedText, setSelectedText] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
@@ -15,7 +17,11 @@ export default function ChatWidget(): JSX.Element | null {
     setIsClient(true);
   }, []);
 
-  if (!isClient) {
+  // Only show chatbot on documentation pages (/physical-ai-book/docs/*)
+  const isDocsPage = location.pathname.startsWith('/physical-ai-book/docs/') || 
+                     location.pathname === '/physical-ai-book/docs';
+
+  if (!isClient || !isDocsPage) {
     return null;
   }
 
