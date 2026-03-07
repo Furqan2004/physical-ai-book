@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useAuth } from '../theme/Root';
 import { apiFetch } from '../utils/api';
 import { useHistory } from '@docusaurus/router';
-import { signUp } from '../utils/auth-client';
 
 /**
  * Signup Page Component

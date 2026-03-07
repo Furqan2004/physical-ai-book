@@ -1,9 +1,17 @@
+import siteConfig from '@generated/docusaurus.config';
+
 /**
  * API utilities for frontend-backend communication
  */
 
-// Use environment variable for backend URL in production, fallback to local for development
-const API_URL = process.env.DOCUSAURUS_BACKEND_URL || 'http://localhost:8000';
+// Port 8000 for everything (FastAPI handles Auth, Agents, Data)
+const rawApiUrl = (siteConfig.customFields?.API_URL as string) || 'http://localhost:8000';
+// Remove trailing slash if present to avoid double slashes
+const API_URL = rawApiUrl.endsWith('/') ? rawApiUrl.slice(0, -1) : rawApiUrl;
+
+if (typeof window !== 'undefined') {
+  console.log('🔌 Connected to API at:', API_URL);
+}
 
 /**
  * Get authentication token from localStorage

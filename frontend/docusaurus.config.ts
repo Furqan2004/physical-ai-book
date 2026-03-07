@@ -1,6 +1,7 @@
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import 'dotenv/config'; // Load .env file
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -18,13 +19,17 @@ const config: Config = {
   url: 'https://Furqan2004.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: process.env.DOCUSAURUS_BASE_URL || '/physical-ai-book/',
+  baseUrl: '/physical-ai-book/',
 
   // GitHub pages deployment config.
   organizationName: 'Furqan2004', // Usually your GitHub org/user name.
   projectName: 'physical-ai-book', // Usually your repo name.
 
   onBrokenLinks: 'throw',
+
+  customFields: {
+    API_URL: process.env.API_URL || 'http://localhost:8000',
+  },
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
