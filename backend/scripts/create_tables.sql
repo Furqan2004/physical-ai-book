@@ -123,6 +123,16 @@ CREATE TABLE IF NOT EXISTS translations (
     UNIQUE(chapter_id, language)
 );
 
+-- Book chapters table
+CREATE TABLE IF NOT EXISTS chapters (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug VARCHAR(255) UNIQUE NOT NULL,
+    title VARCHAR(255),
+    content TEXT NOT NULL,
+    last_synced TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS "idx_user_email" ON "user"(email);
 CREATE INDEX IF NOT EXISTS "idx_session_token" ON "session"(token);
@@ -136,3 +146,4 @@ CREATE INDEX IF NOT EXISTS idx_book_chunks_qdrant_id ON book_chunks(qdrant_id);
 CREATE INDEX IF NOT EXISTS idx_book_chunks_source_file ON book_chunks(source_file);
 CREATE INDEX IF NOT EXISTS idx_user_personalization_lookup ON user_personalization(user_id, chapter_id);
 CREATE INDEX IF NOT EXISTS idx_translations_lookup ON translations(chapter_id, language);
+CREATE INDEX IF NOT EXISTS idx_chapters_slug ON chapters(slug);

@@ -6,37 +6,37 @@
     {
       "name": "Database connection",
       "passed": false,
-      "message": "No module named 'services'"
+      "message": "No module named 'asyncpg'"
     },
     {
       "name": "Qdrant setup",
       "passed": false,
-      "message": "No module named 'services'"
+      "message": "No module named 'qdrant_client'"
     },
     {
       "name": "Embedding generation",
       "passed": false,
-      "message": "No module named 'services'"
+      "message": "No module named 'google'"
     },
     {
       "name": "Authentication endpoints",
       "passed": false,
-      "message": "No module named 'main'"
+      "message": "The starlette.testclient module requires the httpx package to be installed.\nYou can install this with:\n    $ pip install httpx\n"
     },
     {
       "name": "Chat endpoints",
       "passed": false,
-      "message": "No module named 'main'"
+      "message": "The starlette.testclient module requires the httpx package to be installed.\nYou can install this with:\n    $ pip install httpx\n"
     },
     {
       "name": "Agent initialization",
       "passed": false,
-      "message": "No module named 'ai'"
+      "message": "No module named 'openai'"
     },
     {
       "name": "CORS configuration",
       "passed": false,
-      "message": "No module named 'main'"
+      "message": "The starlette.testclient module requires the httpx package to be installed.\nYou can install this with:\n    $ pip install httpx\n"
     }
   ]
 }

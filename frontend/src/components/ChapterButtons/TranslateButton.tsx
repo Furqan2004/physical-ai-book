@@ -12,6 +12,7 @@ export default function TranslateButton({ chapterContent, chapterId }: Translate
   const { setSwappedContent } = usePageContent();
   const [isLoading, setIsLoading] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Don't render if not logged in
   if (!isLoggedIn()) {
@@ -21,6 +22,7 @@ export default function TranslateButton({ chapterContent, chapterId }: Translate
   const handleTranslate = async (mode: 'existing' | 'fresh') => {
     setIsLoading(true);
     setShowOptions(false);
+    setError(null);
 
     try {
       const content = await apiFetchComplete('/api/translate', { 
@@ -30,9 +32,9 @@ export default function TranslateButton({ chapterContent, chapterId }: Translate
       }, true);
       
       setSwappedContent(content);
-    } catch (error) {
-      console.error('Translate error:', error);
-      alert("Failed to translate content. Please check API credits.");
+    } catch (err) {
+      console.error('Translate error:', err);
+      setError("Translation failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -41,7 +43,10 @@ export default function TranslateButton({ chapterContent, chapterId }: Translate
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
       <button
-        onClick={() => setShowOptions(!showOptions)}
+        onClick={() => {
+          setShowOptions(!showOptions);
+          if (!showOptions) setError(null);
+        }}
         disabled={isLoading}
         className="button button--primary button--sm"
         style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
@@ -49,6 +54,21 @@ export default function TranslateButton({ chapterContent, chapterId }: Translate
         {isLoading ? '⏳ Translating...' : '🇵🇰 Urdu Mein'}
         {!isLoading && <span style={{ fontSize: '0.8em' }}>{showOptions ? '▲' : '▼'}</span>}
       </button>
+
+      {error && (
+        <div style={{ 
+          position: 'absolute', 
+          top: '100%', 
+          left: 0, 
+          color: 'var(--ifm-color-danger)', 
+          fontSize: '11px', 
+          marginTop: '4px',
+          whiteSpace: 'nowrap',
+          fontWeight: 'bold'
+        }}>
+          ⚠️ {error}
+        </div>
+      )}
 
       {showOptions && (
         <div style={{

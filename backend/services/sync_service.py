@@ -6,6 +6,7 @@ import uuid
 
 from .openrouter_service import get_embedding
 from .qdrant_service import get_qdrant_client, COLLECTION_NAME, upsert_points, create_collection_if_not_exists, delete_points_by_file
+from .db_service import save_chapter
 
 DOCS_DIR = Path(__file__).parent.parent.parent / 'frontend' / 'docs'
 
@@ -15,10 +16,10 @@ def get_file_hash(content: str) -> str:
 
 async def sync_docs_to_qdrant():
     """
-    Scans documentation files and ensures they are embedded in Qdrant.
+    Scans documentation files and ensures they are embedded in Qdrant and stored in PostgreSQL.
     Only updates files that have changed or are missing.
     """
-    print("🔄 Starting Documentation Sync to Qdrant...")
+    print("🔄 Starting Documentation Sync...")
     
     # 1. Ensure collection exists
     create_collection_if_not_exists()
@@ -26,11 +27,10 @@ async def sync_docs_to_qdrant():
     
     # 2. Iterate through all .md files in docs directory
     for doc_path in DOCS_DIR.rglob('*.md'):
-        # Skip intro.md if it's just a placeholder in the root
-        if doc_path.name == 'intro.md' and doc_path.parent == DOCS_DIR:
-            continue
-            
         source_file = str(doc_path.relative_to(DOCS_DIR))
+        # slug for database lookup (matches @site/docs convention used in frontend)
+        slug = f"@site/docs/{source_file}"
+        
         print(f"📄 Checking {source_file}...")
         
         try:
@@ -40,6 +40,27 @@ async def sync_docs_to_qdrant():
             print(f"❌ Error reading {doc_path}: {e}")
             continue
             
+        # Extract title from first H1 or filename
+        title = None
+        for line in content.split('\n'):
+            if line.startswith('# '):
+                title = line[2:].strip()
+                break
+        if not title:
+            title = doc_path.stem.replace('-', ' ').title()
+
+        # Sync to PostgreSQL (always upsert to ensure content is fresh)
+        try:
+            await save_chapter(slug, content, title)
+            print(f"✅ {source_file} synced to PostgreSQL.")
+        except Exception as e:
+            print(f"❌ Error syncing {source_file} to PostgreSQL: {e}")
+
+        # Skip vector embedding for intro.md if it's just a placeholder in the root
+        if doc_path.name == 'intro.md' and doc_path.parent == DOCS_DIR:
+            print(f"ℹ️ Skipping Qdrant sync for {source_file} (intro placeholder).")
+            continue
+
         file_hash = get_file_hash(content)
         
         # 3. Check if this file already exists in Qdrant with the same hash
@@ -60,7 +81,7 @@ async def sync_docs_to_qdrant():
             existing_points = []
         
         if existing_points:
-            print(f"✅ {source_file} is up to date.")
+            print(f"✅ {source_file} is up to date in Qdrant.")
             continue
             
         print(f"⚡ Updating {source_file} in Qdrant...")

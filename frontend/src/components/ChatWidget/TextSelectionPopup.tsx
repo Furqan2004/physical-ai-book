@@ -33,8 +33,8 @@ export default function TextSelectionPopup({ onAskAboutThis }: TextSelectionPopu
           
           setPopupStyle({
             position: 'fixed',
-            top: rect.top + window.scrollY - 45,
-            left: rect.left + window.scrollX + (rect.width / 2) - 50,
+            top: rect.top - 45,
+            left: rect.left + (rect.width / 2) - 50,
             backgroundColor: 'var(--ifm-color-primary)',
             color: 'white',
             padding: '8px 16px',
