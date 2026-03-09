@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.tox/
+.nox/
+.ipynb_checkpoints/
+*.ipynb
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Project Specific
+report.md
+test_results.json
+VALIDATION_RESULTS.md
+SYSTEM_VALIDATION_REPORT.md
+
+# IDEs
+.vscode/
+.idea/

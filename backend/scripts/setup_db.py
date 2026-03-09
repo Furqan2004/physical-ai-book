@@ -127,6 +127,16 @@ async def create_tables():
                     UNIQUE(chapter_id, language)
                 )
             """),
+            ("chapters", """
+                CREATE TABLE IF NOT EXISTS chapters (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    slug VARCHAR(255) UNIQUE NOT NULL,
+                    title VARCHAR(255),
+                    content TEXT NOT NULL,
+                    last_synced TIMESTAMP DEFAULT NOW(),
+                    created_at TIMESTAMP DEFAULT NOW()
+                )
+            """),
         ]
         
         for table_name, sql in tables:
@@ -145,7 +155,8 @@ async def create_tables():
             'CREATE INDEX IF NOT EXISTS "idx_user_background_user_id" ON user_background(user_id);',
             'CREATE INDEX IF NOT EXISTS "idx_book_chunks_qdrant_id" ON book_chunks(qdrant_id);',
             'CREATE INDEX IF NOT EXISTS idx_user_personalization_lookup ON user_personalization(user_id, chapter_id);',
-            'CREATE INDEX IF NOT EXISTS idx_translations_lookup ON translations(chapter_id, language);'
+            'CREATE INDEX IF NOT EXISTS idx_translations_lookup ON translations(chapter_id, language);',
+            'CREATE INDEX IF NOT EXISTS idx_chapters_slug ON chapters(slug);'
         ]
         
         for idx_sql in indexes:

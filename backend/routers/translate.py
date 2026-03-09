@@ -29,34 +29,51 @@ async def translate(
             }
 
     # 2. Get Source Content (Either mode is fresh or cache missed)
-    content = request.chapter_content
-    if content.startswith('@site/docs') or content.endswith('.md'):
-        content = await get_doc_content(content)
+    try:
+        content = request.chapter_content
+        if content.startswith('@site/docs') or content.endswith('.md'):
+            content = await get_doc_content(content)
+        
+        if content.startswith("Error:"):
+            raise HTTPException(status_code=404, detail=content)
 
-    # POWERFUL PROMPT - DIRECT URDU
-    input_text = f"""
-ACT AS AN EXPERT TECHNICAL TRANSLATOR.
-TRANSLATE THE FOLLOWING CHAPTER INTO PURE URDU (Urdu script).
+        # POWERFUL PROMPT - DIRECT URDU
+        input_text = f"""
+# ROLE
+You are an EXPERT TECHNICAL TRANSLATOR specializing in Physical AI and Robotics. Your goal is to provide a pure, professional Urdu script translation of technical documentation.
 
-CHAPTER CONTENT:
+# TASK
+Translate the following book chapter into professional PURE URDU (Urdu script / اردو).
+
+# CHAPTER CONTENT
 {content}
 
-RULES:
-1. USE CLEAR AND PROFESSIONAL URDU SCRIPT (اردو).
-2. DO NOT TRANSLATE CODE BLOCKS. KEEP THEM AS IS.
-3. DO NOT TRANSLATE TECHNICAL TERMS (e.g., API, Function, Database, Node, ROS2).
-4. MAINTAIN ALL MARKDOWN FORMATTING (Headings, Tables, Lists).
-5. RETURN THE COMPLETE TRANSLATED CHAPTER. DO NOT SUMMARIZE OR OMIT ANY PART.
+# CRITICAL RULES
+1. LANGUAGE: Use professional, high-quality URDU SCRIPT (اردو). The language should be clear, scholarly, and easy to read.
+2. TECHNICAL TERMS: DO NOT translate technical terms or acronyms (e.g., ROS2, Nodes, Topics, Kinematics, Python, API, SDK, Hardware). Keep them in their original English form within the Urdu text.
+3. CODE BLOCKS: Do not modify or translate code blocks. Keep all code exactly as it appears in the source.
+4. MARKDOWN: Maintain all markdown formatting (Headings, Tables, Lists, Bold, Italic) perfectly.
+5. COMPLETENESS: Return the COMPLETE translated chapter. Do not summarize, skip, or omit any section.
+6. FORMAT: Return ONLY the raw markdown content.
 """
 
-    result = await Runner.run(orchestrator_agent, input=input_text)
-    
-    # 3. Save to DB before returning (Global)
-    translated_content = result.final_output
-    await save_translation(request.chapter_id, translated_content, language='ur')
-    
-    return {
-        "translated_content": translated_content,
-        "chapter_id": request.chapter_id,
-        "cached": False
-    }
+        result = await Runner.run(orchestrator_agent, input=input_text)
+        
+        # 3. Save to DB before returning (Global)
+        translated_content = result.final_output
+        if not translated_content:
+            raise Exception("AI Agent returned empty content")
+            
+        await save_translation(request.chapter_id, translated_content, language='ur')
+        
+        return {
+            "translated_content": translated_content,
+            "chapter_id": request.chapter_id,
+            "cached": False
+        }
+    except Exception as e:
+        print(f"ERROR in translation: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail="Translation failed. Please try again."
+        )

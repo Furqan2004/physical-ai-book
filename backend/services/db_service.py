@@ -288,3 +288,42 @@ async def save_translation(chapter_id: str, content: str, language: str = 'ur') 
     except Exception as e:
         print(f"Error saving translation: {e}")
         return False
+
+
+async def get_chapter(slug: str) -> Optional[Dict[str, Any]]:
+    """Get chapter content by slug from 'chapters' table"""
+    pool = await get_connection()
+    try:
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT * FROM chapters WHERE slug = $1",
+                slug
+            )
+            if row:
+                return dict(row)
+            return None
+    except Exception as e:
+        print(f"Error getting chapter: {e}")
+        return None
+
+
+async def save_chapter(slug: str, content: str, title: Optional[str] = None) -> bool:
+    """Save or update chapter content in 'chapters' table"""
+    pool = await get_connection()
+    try:
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO chapters (slug, content, title, last_synced)
+                VALUES ($1, $2, $3, NOW())
+                ON CONFLICT (slug) DO UPDATE SET
+                    content = EXCLUDED.content,
+                    title = EXCLUDED.title,
+                    last_synced = NOW()
+                """,
+                slug, content, title
+            )
+            return True
+    except Exception as e:
+        print(f"Error saving chapter: {e}")
+        return False

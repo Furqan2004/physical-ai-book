@@ -210,9 +210,10 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
 
 ## Active Technologies
-- Python 3.11+ (Backend), TypeScript/Next.js (Frontend - Docusaurus v3.9.2) + Better Auth, FastAPI, OpenAI Agents SDK, Docusaurus, React 19 (004-fix-system-and-auth)
-- Neon PostgreSQL (Relational + Auth), Qdrant Cloud (Vector) (004-fix-system-and-auth)
-- Python 3.11+ + FastAPI, httpx, asyncpg, openai-agents (005-optimize-personalize-translate)
+- TypeScript 5.x (Frontend), Python 3.11+ (Backend) + Docusaurus v3.9, FastAPI, OpenAI Agents SDK (OpenRouter) (006-fix-ask-ai-prompts)
+- Neon Postgres, Qdrant Cloud (Vector DB) (006-fix-ask-ai-prompts)
+- TypeScript 5.x (Frontend), Python 3.11+ (Backend) + Docusaurus v3.9, FastAPI, asyncpg, OpenAI Agents SDK (007-enhance-chat-and-db)
+- Neon PostgreSQL, Qdrant Cloud (007-enhance-chat-and-db)
 
 ## Recent Changes
-- 004-fix-system-and-auth: Added Python 3.11+ (Backend), TypeScript/Next.js (Frontend - Docusaurus v3.9.2) + Better Auth, FastAPI, OpenAI Agents SDK, Docusaurus, React 19
+- 006-fix-ask-ai-prompts: Added TypeScript 5.x (Frontend), Python 3.11+ (Backend) + Docusaurus v3.9, FastAPI, OpenAI Agents SDK (OpenRouter)

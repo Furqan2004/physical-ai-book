@@ -25,7 +25,7 @@ export default function Profile(): React.JSX.Element {
 
   // Redirect if not logged in
   if (!isLoggedIn()) {
-    history.push('/physical-ai-book/signin');
+    history.push('/physical-ai-book/login');
     return <div>Redirecting...</div>;
   }
 
@@ -121,7 +121,7 @@ export default function Profile(): React.JSX.Element {
                   <p>You haven't completed your learning profile yet.</p>
                   <button
                     className="button button--secondary"
-                    onClick={() => history.push('/physical-ai-book/onboarding')}
+                    onClick={() => history.push('/physical-ai-book/signup')}
                   >
                     Complete Profile
                   </button>

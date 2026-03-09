@@ -22,6 +22,7 @@ export default function ChatWindow({ onClose, initialSelectedText, isLoggedIn = 
   const [isLoading, setIsLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isUserLoggedIn = isLoggedIn !== undefined ? isLoggedIn : authIsLoggedIn();
 
@@ -44,6 +45,33 @@ export default function ChatWindow({ onClose, initialSelectedText, isLoggedIn = 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
+  // Pre-fill if opened from "Ask AI" (instead of auto-send)
+  useEffect(() => {
+    if (initialSelectedText && messages.length === 0) {
+      setInput(`Selected Context: "${initialSelectedText}"\n\nMy Question: `);
+      // Focus and adjust height after pre-fill
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          adjustHeight();
+        }
+      }, 100);
+    }
+  }, [initialSelectedText, sessionId]);
+
+  const adjustHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      const newHeight = Math.min(textarea.scrollHeight, 250);
+      textarea.style.height = `${newHeight}px`;
+    }
+  };
+
+  useEffect(() => {
+    adjustHeight();
+  }, [input]);
+
   const loadChatHistory = async () => {
     try {
       const response = await apiFetch(`/api/chat/history?session_id=${sessionId}`, {}, true);
@@ -63,13 +91,6 @@ export default function ChatWindow({ onClose, initialSelectedText, isLoggedIn = 
       console.error('Failed to load chat history:', error);
     }
   };
-
-  // Auto-send if opened from "Ask AI" (only for new empty chats)
-  useEffect(() => {
-    if (initialSelectedText && messages.length === 0 && !isLoading) {
-      handleSend(`Explain this content: "${initialSelectedText}"`);
-    }
-  }, [initialSelectedText, sessionId]);
 
   const handleSend = async (overrideInput?: string) => {
     const userMessage = overrideInput || input.trim();
@@ -113,7 +134,7 @@ export default function ChatWindow({ onClose, initialSelectedText, isLoggedIn = 
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -239,6 +260,7 @@ export default function ChatWindow({ onClose, initialSelectedText, isLoggedIn = 
               fontSize: '14px',
               lineHeight: '1.5',
               boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+              whiteSpace: 'pre-wrap',
             }}
           >
             {msg.content}
@@ -266,24 +288,30 @@ export default function ChatWindow({ onClose, initialSelectedText, isLoggedIn = 
             display: 'flex',
             gap: '10px',
             backgroundColor: 'var(--ifm-background-color)',
+            alignItems: 'flex-end',
           }}
         >
-          <input
-            type="text"
+          <textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             disabled={isLoading}
+            rows={1}
             style={{
               flex: 1,
               padding: '12px 15px',
               border: '1px solid var(--ifm-color-emphasis-300)',
-              borderRadius: '25px',
+              borderRadius: '20px',
               fontSize: '14px',
               outline: 'none',
               backgroundColor: 'var(--ifm-background-color)',
               color: 'var(--ifm-color-emphasis-900)',
+              resize: 'none',
+              maxHeight: '250px',
+              fontFamily: 'inherit',
+              lineHeight: '1.5',
             }}
           />
           <button
@@ -302,6 +330,8 @@ export default function ChatWindow({ onClose, initialSelectedText, isLoggedIn = 
               justifyContent: 'center',
               fontSize: '18px',
               opacity: isLoading || !input.trim() ? 0.6 : 1,
+              flexShrink: 0,
+              marginBottom: '2px',
             }}
           >
             ➤

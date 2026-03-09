@@ -46,7 +46,7 @@ async def health_check():
     """Health check endpoint"""
     return {
         "status": "ok",
-        "model": "nvidia/nemotron-3-nano-30b-a3b:free"
+        "model": ai.LLM_MODEL
     }
 
 @app.get("/")
